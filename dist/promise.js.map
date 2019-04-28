@@ -1,0 +1,1 @@
+{"version":3,"file":"promise.js","sources":["../src/index.js"],"sourcesContent":["const i = 0\r\n\r\nconsole.log(i)"],"names":["const"],"mappings":";;;;;;;CAAAA,IAAM,CAAC,GAAG,EAAC;;CAEX,OAAO,CAAC,GAAG,CAAC,CAAC;;;;"}

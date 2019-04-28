@@ -1,0 +1,35 @@
+{
+  "name": "pledge",
+  "version": "1.0.0",
+  "description": "pledge is a lightweight promise library implementing the Promises/A+ specification ",
+  "main": "index.js",
+  "scripts": {
+    "dev": "rollup -c --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yyf1994gggg/pledge.git"
+  },
+  "keywords": [
+    "promise"
+  ],
+  "author": "Fong Yee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yyf1994gggg/pledge/issues"
+  },
+  "homepage": "https://github.com/yyf1994gggg/pledge#readme",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "rollup": "^1.10.1",
+    "rollup-plugin-buble": "^0.19.6",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-uglify": "^6.0.2"
+  }
+}
