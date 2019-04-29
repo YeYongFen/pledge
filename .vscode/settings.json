@@ -1,5 +1,6 @@
 {
     "eslint.autoFixOnSave": true,
+    "tslint.enable":false,
     "editor.formatOnSave": false,
     "editor.tabSize": 2,
     "vetur.validation.template": false,
