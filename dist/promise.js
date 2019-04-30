@@ -7,10 +7,16 @@
 
   var constructorErrorText = 'Failed to construct \'Promise\': Please use the \'new\' operator, this object constructor cannot be called as a function.';
   var resolverErrorText = 'You must pass a resolver function as the first argument to the promise constructor';
+  var resolveSelfErrorText = 'You cannot resolve a promise with itself';
+  var cannotReturnOwnText = 'A promises callback cannot return that same promise.';
 
   var constructorError = function () { return new TypeError(constructorErrorText); };
 
   var resolverError = function () { return new TypeError(resolverErrorText); };
+
+  var resolveSelfError = function () { return new TypeError(resolveSelfErrorText); };
+
+  var cannotReturnOwn = function () { return new TypeError(cannotReturnOwnText); };
 
   var isObject = function (val) {
     return val !== null && typeof val === 'object';
@@ -110,9 +116,11 @@
           mockResolve(this$1, value);
         },
         function (reason) {
+          mockReject(this$1, reason);
         }
       );
     } catch (e) {
+      mockReject(this, e);
     }
     return null;
   };
@@ -139,13 +147,19 @@
     for (var i = 0; i < subscribes.length; i += 3) {
       var item = subscribes[i];
       var callback = subscribes[i + settled];
+      if (item) {
+        this.invokeCallback(settled, item, callback, result);
+      } else {
+        callback(result);
+      }
     }
     this.subscribes.length = 0;
   };
 
   Promise.prototype.invokeCallback = function (settled, child, callback, detail) {
     var hasCallback = isFunction(callback);
-    var value; var succeeded;
+    var value; var error; var succeeded; var failed;
+
     if (child['[[PromiseStatus]]'] !== PENDING) {
       return;
     }
@@ -155,6 +169,19 @@
         value = callback(detail);
         succeeded = true;
       } catch (e) {
+        error = { error: e, };
+        failed = true;
+      }
+      /*
+          var p = new Promise((r) => r(1))
+          var pp = p.then(() => {
+              return pp
+          })
+
+          is not allow
+      */
+      if (child === value) {
+        mockReject(child, cannotReturnOwn());
       }
     } else {
       /*
@@ -170,21 +197,36 @@
     if (hasCallback) {
       if (succeeded) {
         mockResolve(child, value);
+      } else if (failed) {
+        mockReject(child, error);
       }
     } else {
-      if (settled === 'fulfilled') {
+      if (settled === FULFILLED) {
         this.fulfill.call(child, value);
+      } else if (settled === REJECTED) {
+        mockReject(child, value);
       }
     }
   };
 
   Promise.prototype.then = function (onFulfilled, onRejected) {
+    var this$1 = this;
+
     var parent = this;
     var child = new this.constructor(noop);
 
     var state = this['[[PromiseStatus]]'];
 
-    if (state) ; else {
+    if (state) { // 'pending' Corresponding to   undefined ，'fulfilled' Corresponding to  1，'rejected' Corresponding to  2
+      var callback = arguments[state - 1];
+      asap(function () { return this$1.invokeCallback(
+          this$1['[[PromiseStatus]]'],
+          child,
+          callback,
+          this$1['[[PromiseValue]]']
+        ); }
+      );
+    } else {
       this.subscribe(parent, child, onFulfilled, onRejected);
     }
 
@@ -198,24 +240,163 @@
     subscribes[length + FULFILLED] = onFulfilled;
     subscribes[length + REJECTED] = onRejected;
     if (length === 0 && parent['[[PromiseStatus]]']) {
-      this.asap(this.publish);
+      asap(this.publish.bind(this));
     }
   };
 
+  Promise.prototype.handleThenable = function (value) {
+    var then;
+    try {
+      then = value.then;
+    } catch (e) {
+      mockReject(this, { error: e, });
+      return;
+    }
+
+    // true Promise
+    if (isThenable(value)) {
+      this.handlePromise(value);
+      return;
+    }
+
+    // // 如果 then 是函数，则检验 then 方法的合法性
+    if (isFunction(then)) {
+      this.handleForeignThenable(value, then);
+      return;
+    }
+    // normal data
+    this.fulfill(value);
+  };
+
+  Promise.prototype.handleForeignThenable = function (thenable, then) {
+    var this$1 = this;
+
+    asap(function () {
+      var sealed = false;
+      var error = tryThen(
+        then,
+        thenable,
+        function (value) {
+          if (sealed) {
+            return;
+          }
+          sealed = true;
+          if (thenable !== value) {
+            mockResolve(this$1, value);
+          } else {
+            this$1.fulfill(value);
+          }
+        },
+        function (reason) {
+          if (sealed) {
+            return;
+          }
+          sealed = true;
+          mockReject(this$1, reason);
+        }
+      );
+
+      if (!sealed && error) {
+        sealed = true;
+        mockReject(this$1, error);
+      }
+    });
+  };
+
+  Promise.prototype.handlePromise = function (promise) {
+    var this$1 = this;
+
+    var state = promise['[[PromiseStatus]]'];
+    var result = promise['[[PromiseValue]]'];
+
+    if (state === FULFILLED) {
+      this.fulfill(result);
+      return;
+    }
+    if (state === REJECTED) {
+      mockReject(this, result);
+      return;
+    }
+    this.subscribe(
+      promise,
+      undefined,
+      function (value) { return mockResolve(this$1, value); },
+      function (reason) { return mockReject(this$1, reason); }
+    );
+  };
+
   function mockResolve (promise, value) {
-    if (promise === value) ; else if (isObject(value) || isFunction(value)) ; else {
+    if (promise === value) {
+      mockReject(promise, resolveSelfError()); // 2.3.1、If promise and x refer to the same object, reject promise with a TypeError as the reason
+    } else if (isObject(value) || isFunction(value)) { // handle the thenable
+      promise.handleThenable(value);
+    } else {
       promise.fulfill(value);
     }
   }
 
+  function mockReject (promise, reason) {
+    if (promise['[[PromiseStatus]]'] !== PENDING) { return; }
+
+    promise['[[PromiseStatus]]'] = REJECTED;
+    promise['[[PromiseValue]]'] = reason;
+    asap(promise.publish.bind(promise));
+  }
+
+  function isThenable (value) {
+    var sameConstructor = value.constructor === Promise;
+    var sameThen = value.then === Promise.prototype.then;
+    // const sameResolve = value.constructor.resolve === Promise.resolve;
+    return sameConstructor && sameThen;
+  }
+
+  function tryThen (then, thenable, resolvePromise, rejectPromise) {
+    try {
+      then.call(thenable, resolvePromise, rejectPromise);
+    } catch (e) {
+      return e;
+    }
+  }
+
+  Promise.resolve = function (object) {
+    var Constructor = this;
+
+    if (object && typeof object === 'object' && object.constructor === Constructor) {
+      return object;
+    }
+
+    var promise = new Constructor(noop);
+    mockResolve(promise, object);
+    return promise;
+  };
+
+  Promise.reject = function (reason) {
+    var Constructor = this;
+    var promise = new Constructor(noop);
+    mockReject(promise, reason);
+    return promise;
+  };
+
   // import asap from './promise/asap';
 
-  var p = new Promise(function (resolve) {
-    setTimeout(function () {
-      resolve(1);
-    }, 2222);
-  }).then(function (n) {
-    console.log(n);
+  // let p = new Promise((resolve) => {
+  //   setTimeout(() => {
+  //     resolve(1);
+  //   }, 2222);
+  // }).then((n) => {
+  //   console.log(n);
+  // });
+
+  var p1 = new Promise(function (resolve) {
+    var obj = {
+      then: function (fn) {
+        fn(1);
+      },
+    };
+
+    resolve(obj);
+  }).then(function (data) {
+    console.log(data);
   });
 
 }));

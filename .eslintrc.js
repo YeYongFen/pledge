@@ -28,6 +28,8 @@ module.exports = {
       "describe": false,
       "it": false,
       "specify": false
-    }
+    },
+
+    
 
 }
