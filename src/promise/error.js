@@ -5,14 +5,18 @@ const cannotReturnOwnText = 'A promises callback cannot return that same promise
 const validationErrorText = 'Array Methods must be provided an Array';
 const needsResolverText = 'You must pass a resolver function as the first argument to the promise constructor';
 
-export const constructorError = () => new TypeError(constructorErrorText);
+const constructorError = function () { return new TypeError(constructorErrorText); };
 
-export const resolverError = () => new TypeError(resolverErrorText);
+const resolverError = function () { return new TypeError(resolverErrorText); };
 
-export const resolveSelfError = () => new TypeError(resolveSelfErrorText);
+const resolveSelfError = function () { return new TypeError(resolveSelfErrorText); };
 
-export const cannotReturnOwn = () => new TypeError(cannotReturnOwnText);
+const cannotReturnOwn = function () { return new TypeError(cannotReturnOwnText); };
 
-export const validationError = () => new Error(validationErrorText);
+const validationError = function () { return new Error(validationErrorText); };
 
-export const needsResolver = () => new TypeError(needsResolverText);
+const needsResolver = function () { return new TypeError(needsResolverText); };
+
+module.exports = {
+  constructorError, resolverError, resolveSelfError, cannotReturnOwn, validationError, needsResolver,
+};

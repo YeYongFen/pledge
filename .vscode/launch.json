@@ -13,14 +13,28 @@
       "args": [
         "--require",
         "@babel/register",
-          "test/index.js",
-          
+        "test/index.js",
       ],
       "cwd": "${workspaceRoot}",
       "runtimeExecutable": null,
       "env": {
-          "NODE_ENV": "testing"
+        "NODE_ENV": "testing"
       }
-  }
+    },
+
+
+    {
+      "name": "Run build",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}//build//index.js",
+      "args": [
+        "--format",
+        "es","--sourcemap"
+      
+      ],
+      "cwd": "${workspaceRoot}",
+
+    }
   ]
 }

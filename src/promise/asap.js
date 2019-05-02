@@ -21,13 +21,13 @@ function makeMutationObserver (callback) {
   const observer = new BrowserMutationObserver(callback);
   const node = document.createTextNode('');
   observer.observe(node, { characterData: true, });
-  return () => {
+  return function () {
     node.data = --toggle;
   };
 };
 
 function makeMutationTimeout (callback) {
-  return () => setTimeout(callback, 1);
+  return function () { setTimeout(callback, 1); };
 };
 
 function flush () {
@@ -49,7 +49,7 @@ function flush () {
   // flushing = false;
 }
 
-export default function asap (task) {
+function asap (task) {
   if (!queue.length) {
     requestFlush();
     // flushing = true;
@@ -57,3 +57,5 @@ export default function asap (task) {
   // Equivalent to push, but avoids a function call.
   queue[queue.length] = task;
 }
+
+module.exports = asap;

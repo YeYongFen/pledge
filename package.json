@@ -4,8 +4,13 @@
   "description": "pledge is a lightweight promise library implementing the Promises/A+ specification ",
   "main": "index.js",
   "scripts": {
-    "dev": "rollup -c --watch",
-    "test": "mocha --require @babel/register ./test/index.js"
+    "dev": "rollup --config build/rollup.config.hot.js --watch",
+    "build:es": "node ./build/index.js --format es",
+    "build:umd": "node ./build/index.js --format umd ",
+    "build:cjs": "node ./build/index.js --format cjs ",
+    "build:amd": "node ./build/index.js --format amd ",
+    "build": "npm run build:es && npm run build:umd&&npm run build:amd && npm run build:cjs",
+    "test": "mocha ./test/index.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +31,7 @@
     "@babel/node": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0",
+    "cross-env": "^5.2.0",
     "eslint": "^5.16.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.17.2",
@@ -36,8 +42,10 @@
     "promises-aplus-tests": "^2.1.2",
     "rollup": "^1.10.1",
     "rollup-plugin-buble": "^0.19.6",
+    "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-serve": "^1.0.1",
-    "rollup-plugin-uglify": "^6.0.2"
+    "rollup-plugin-uglify": "^6.0.2",
+    "yargs": "^13.2.2"
   }
 }

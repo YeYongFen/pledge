@@ -1,14 +1,14 @@
 
-import { resolverError, constructorError, resolveSelfError, cannotReturnOwn } from './error';
-import { isObject, isFunction, noop } from './utils';
-import asap from './asap';
+const { isObject, isFunction, noop, } = require('./utils');
+const asap = require('./asap');
+const { resolverError, constructorError, resolveSelfError, cannotReturnOwn, } = require('./error');
 
 const PENDING = void 0; // undefined
 const FULFILLED = 1;
 const REJECTED = 2;
 
 let id = 0;
-export default function Promise (resolver) {
+function Promise (resolver) {
   if (!(this instanceof Promise)) {
     throw constructorError();
   }
@@ -25,17 +25,18 @@ export default function Promise (resolver) {
 }
 
 Promise.prototype.initializePromise = function (resolver) {
+  const self = this;
   try {
     resolver(
-      value => {
-        mockResolve(this, value);
+      function (value) {
+        mockResolve(self, value);
       },
-      reason => {
-        mockReject(this, reason);
+      function (reason) {
+        mockReject(self, reason);
       }
     );
   } catch (e) {
-    mockReject(this, e);
+    mockReject(self, e);
   }
   return null;
 };
@@ -113,7 +114,7 @@ Promise.prototype.invokeCallback = function (settled, child, callback, detail) {
     if (succeeded) {
       mockResolve(child, value);
     } else if (failed) {
-      mockReject(child, error);
+      mockReject(child, error.error);
     }
   } else {
     if (settled === FULFILLED) {
@@ -126,19 +127,22 @@ Promise.prototype.invokeCallback = function (settled, child, callback, detail) {
 
 Promise.prototype.then = function (onFulfilled, onRejected) {
   const parent = this;
+  const self = this;
   const child = new this.constructor(noop);
 
   const state = this['[[PromiseStatus]]'];
 
   if (state) { // 'pending' Corresponding to   undefined ，'fulfilled' Corresponding to  1，'rejected' Corresponding to  2
     const callback = arguments[state - 1];
-    asap(() =>
-      this.invokeCallback(
-        this['[[PromiseStatus]]'],
+    asap(function () {
+      self.invokeCallback(
+        self['[[PromiseStatus]]'],
         child,
         callback,
-        this['[[PromiseValue]]']
+        self['[[PromiseValue]]']
       )
+      ;
+    }
     );
   } else {
     this.subscribe(parent, child, onFulfilled, onRejected);
@@ -185,34 +189,35 @@ Promise.prototype.handleThenable = function (value) {
 };
 
 Promise.prototype.handleForeignThenable = function (thenable, then) {
-  asap(() => {
+  const self = this;
+  asap(function () {
     let sealed = false;
     const error = tryThen(
       then,
       thenable,
-      value => {
+      function (value) {
         if (sealed) {
           return;
         }
         sealed = true;
         if (thenable !== value) {
-          mockResolve(this, value);
+          mockResolve(self, value);
         } else {
-          this.fulfill(value);
+          self.fulfill(value);
         }
       },
-      reason => {
+      function (reason) {
         if (sealed) {
           return;
         }
         sealed = true;
-        mockReject(this, reason);
+        mockReject(self, reason);
       }
     );
 
     if (!sealed && error) {
       sealed = true;
-      mockReject(this, error);
+      mockReject(self, error);
     }
   });
 };
@@ -220,6 +225,7 @@ Promise.prototype.handleForeignThenable = function (thenable, then) {
 Promise.prototype.handlePromise = function (promise) {
   const state = promise['[[PromiseStatus]]'];
   const result = promise['[[PromiseValue]]'];
+  const self = this;
 
   if (state === FULFILLED) {
     this.fulfill(result);
@@ -232,8 +238,8 @@ Promise.prototype.handlePromise = function (promise) {
   this.subscribe(
     promise,
     undefined,
-    value => mockResolve(this, value),
-    reason => mockReject(this, reason)
+    function (value) { mockResolve(self, value); },
+    function (reason) { mockReject(self, reason); }
   );
 };
 
@@ -288,3 +294,5 @@ Promise.reject = function (reason) {
   mockReject(promise, reason);
   return promise;
 };
+
+module.exports = Promise;

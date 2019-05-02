@@ -1,7 +1,3 @@
-
-(function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
-'use strict';
-
 var isObject = function (val) {
   return val !== null && typeof val === 'object';
 };
@@ -402,31 +398,4 @@ Promise.reject = function (reason) {
 
 var promise = Promise;
 
-// import asap from './promise/asap';
-
-// let p = new Promise((resolve) => {
-//   setTimeout(() => {
-//     resolve(1);
-//   }, 2222);
-// }).then((n) => {
-//   console.log(n);
-// });
-
-var p1 = new promise(function (resolve) {
-  var obj = {
-    then: function (fn) {
-      fn(1);
-    },
-  };
-
-  resolve(obj);
-}).then(function (data) {
-  console.log(data);
-});
-
-var src = {
-
-};
-
-module.exports = src;
-//# sourceMappingURL=promise.js.map
+export default promise;

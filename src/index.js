@@ -1,4 +1,4 @@
-import Promise from './promise/promise.js';
+const Promise = require('./promise/promise.js');
 
 // import asap from './promise/asap';
 

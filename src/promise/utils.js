@@ -1,10 +1,15 @@
-export const isObject = (val) => {
+const isObject = function (val) {
   return val !== null && typeof val === 'object';
 };
 
-export const isFunction = (val) => {
+const isFunction = function (val) {
   return toString.call(val) === '[object Function]';
 };
 
-export const noop = () => {}
+const noop = function () {}
+;
+
+module.exports = {
+  isObject, isFunction, noop,
+}
 ;
