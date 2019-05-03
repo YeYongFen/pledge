@@ -344,31 +344,6 @@ Promise.prototype.handlePromise = function (promise) {
   );
 };
 
-Promise.prototype.catch = function (onRejected) {
-  return this.then(null, onRejected);
-};
-
-Promise.prototype.finally = function (callback) {
-  if (typeof callback !== 'function') {
-    return this;
-  }
-  var p = this.constructor;
-  return this.then(callback, callback);
-
-  // function resolve (value) {
-  //   function yes () {
-  //     return value;
-  //   }
-  //   return p.resolve(callback()).then(yes);
-  // }
-  // function reject (reason) {
-  //   function no () {
-  //     throw reason;
-  //   }
-  //   return p.resolve(callback()).then(no);
-  // }
-};
-
 function mockResolve (promise, value) {
   if (promise === value) {
     mockReject(promise, resolveSelfError$1()); // 2.3.1、If promise and x refer to the same object, reject promise with a TypeError as the reason
@@ -424,4 +399,3 @@ Promise.reject = function (reason) {
 var promise = Promise;
 
 export default promise;
-//# sourceMappingURL=promise.es.js.map
