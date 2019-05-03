@@ -79,6 +79,8 @@ var resolveSelfErrorText = 'You cannot resolve a promise with itself';
 var cannotReturnOwnText = 'A promises callback cannot return that same promise.';
 var validationErrorText = 'Array Methods must be provided an Array';
 var needsResolverText = 'You must pass a resolver function as the first argument to the promise constructor';
+var allNotPassArrayErrorText = 'You must pass an array to Promise.all()';
+var raceNotPassArrayErrorText = 'You must pass an array to Promise.race()';
 
 var constructorError = function () { return new TypeError(constructorErrorText); };
 
@@ -92,8 +94,12 @@ var validationError = function () { return new Error(validationErrorText); };
 
 var needsResolver = function () { return new TypeError(needsResolverText); };
 
+var allNotPassArrayError = function () { return new TypeError(allNotPassArrayErrorText); };
+
+var raceNotPassArrayError = function () { return new TypeError(raceNotPassArrayErrorText); };
+
 var error = {
-  constructorError: constructorError, resolverError: resolverError, resolveSelfError: resolveSelfError, cannotReturnOwn: cannotReturnOwn, validationError: validationError, needsResolver: needsResolver,
+  constructorError: constructorError, resolverError: resolverError, resolveSelfError: resolveSelfError, cannotReturnOwn: cannotReturnOwn, validationError: validationError, needsResolver: needsResolver, allNotPassArrayError: allNotPassArrayError, raceNotPassArrayError: raceNotPassArrayError,
 };
 
 var isObject$1 = utils.isObject;
@@ -105,6 +111,8 @@ var resolverError$1 = error.resolverError;
 var constructorError$1 = error.constructorError;
 var resolveSelfError$1 = error.resolveSelfError;
 var cannotReturnOwn$1 = error.cannotReturnOwn;
+var allNotPassArrayError$1 = error.allNotPassArrayError;
+var raceNotPassArrayError$1 = error.raceNotPassArrayError;
 
 var PENDING = void 0; // undefined
 var FULFILLED = 1;
@@ -344,6 +352,32 @@ Promise.prototype.handlePromise = function (promise) {
   );
 };
 
+Promise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+Promise.prototype.finally = function (callback) {
+  if (typeof callback !== 'function') {
+    return this;
+  }
+  var p = this.constructor;
+  // return this.then(resolve, reject);
+  return this.then(resolve, reject);
+
+  function resolve (value) {
+    function yes () {
+      return value;
+    }
+    return p.resolve(callback()).then(yes);
+  }
+  function reject (reason) {
+    function no () {
+      throw reason;
+    }
+    return p.resolve(callback()).then(no);
+  }
+};
+
 function mockResolve (promise, value) {
   if (promise === value) {
     mockReject(promise, resolveSelfError$1()); // 2.3.1、If promise and x refer to the same object, reject promise with a TypeError as the reason
@@ -394,6 +428,64 @@ Promise.reject = function (reason) {
   var promise = new Constructor(noop$1);
   mockReject(promise, reason);
   return promise;
+};
+
+Promise.all = function (promises) {
+  return new Promise(function (resolve, reject) {
+    if (!Array.isArray(promises)) {
+      reject(allNotPassArrayError$1());
+      return;
+    }
+
+    var results = [];
+    var remaining = 0;
+
+    function resolver (index) {
+      remaining++;
+      return function (value) {
+        results[index] = value;
+        if (!--remaining) {
+          resolve(results);
+        }
+      };
+    }
+
+    for (var i = 0, promise = (void 0); i < promises.length; i++) {
+      promise = promises[i];
+
+      if (promise && typeof promise.then === 'function') {
+        promise.then(resolver(i), reject);
+      } else {
+        results[i] = promise;
+      }
+    }
+
+    if (!remaining) {
+      resolve(results);
+    }
+  });
+};
+
+Promise.race = function (promises) {
+  return new Promise(function (resolve, reject) {
+    if (!Array.isArray(promises)) {
+      reject(raceNotPassArrayError$1());
+    }
+
+    if (promises.length === 0) {
+      resolve([]);
+    }
+
+    for (var i = 0, promise = (void 0); i < promises.length; i++) {
+      promise = promises[i];
+
+      if (promise && typeof promise.then === 'function') {
+        promise.then(resolve, reject);
+      } else {
+        resolve(promise);
+      }
+    }
+  });
 };
 
 var promise = Promise;
