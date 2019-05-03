@@ -1,7 +1,7 @@
 
 const { isObject, isFunction, noop, } = require('./utils');
 const asap = require('./asap');
-const { resolverError, constructorError, resolveSelfError, cannotReturnOwn, } = require('./error');
+const { resolverError, constructorError, resolveSelfError, cannotReturnOwn, allNotPassArrayError, raceNotPassArrayError, } = require('./error');
 
 const PENDING = void 0; // undefined
 const FULFILLED = 1;
@@ -243,6 +243,32 @@ Promise.prototype.handlePromise = function (promise) {
   );
 };
 
+Promise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+Promise.prototype.finally = function (callback) {
+  if (typeof callback !== 'function') {
+    return this;
+  }
+  let p = this.constructor;
+  // return this.then(resolve, reject);
+  return this.then(resolve, reject);
+
+  function resolve (value) {
+    function yes () {
+      return value;
+    }
+    return p.resolve(callback()).then(yes);
+  }
+  function reject (reason) {
+    function no () {
+      throw reason;
+    }
+    return p.resolve(callback()).then(no);
+  }
+};
+
 function mockResolve (promise, value) {
   if (promise === value) {
     mockReject(promise, resolveSelfError()); // 2.3.1、If promise and x refer to the same object, reject promise with a TypeError as the reason
@@ -293,6 +319,64 @@ Promise.reject = function (reason) {
   let promise = new Constructor(noop);
   mockReject(promise, reason);
   return promise;
+};
+
+Promise.all = function (promises) {
+  return new Promise(function (resolve, reject) {
+    if (!Array.isArray(promises)) {
+      reject(allNotPassArrayError());
+      return;
+    }
+
+    let results = [];
+    let remaining = 0;
+
+    function resolver (index) {
+      remaining++;
+      return function (value) {
+        results[index] = value;
+        if (!--remaining) {
+          resolve(results);
+        }
+      };
+    }
+
+    for (let i = 0, promise; i < promises.length; i++) {
+      promise = promises[i];
+
+      if (promise && typeof promise.then === 'function') {
+        promise.then(resolver(i), reject);
+      } else {
+        results[i] = promise;
+      }
+    }
+
+    if (!remaining) {
+      resolve(results);
+    }
+  });
+};
+
+Promise.race = function (promises) {
+  return new Promise(function (resolve, reject) {
+    if (!Array.isArray(promises)) {
+      reject(raceNotPassArrayError());
+    }
+
+    if (promises.length === 0) {
+      resolve([]);
+    }
+
+    for (let i = 0, promise; i < promises.length; i++) {
+      promise = promises[i];
+
+      if (promise && typeof promise.then === 'function') {
+        promise.then(resolve, reject);
+      } else {
+        resolve(promise);
+      }
+    }
+  });
 };
 
 module.exports = Promise;

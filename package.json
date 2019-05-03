@@ -10,7 +10,7 @@
     "build:cjs": "node ./build/index.js --format cjs ",
     "build:amd": "node ./build/index.js --format amd ",
     "build": "npm run build:es && npm run build:umd&&npm run build:amd && npm run build:cjs",
-    "test": "mocha ./test/index.js"
+    "test": "mocha -R  nyan ./test/index.js"
   },
   "repository": {
     "type": "git",
