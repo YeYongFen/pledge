@@ -1,8 +1,10 @@
 {
-  "name": "pledge",
+  "name": "pledged",
   "version": "1.0.0",
-  "description": "pledge is a lightweight promise library implementing the Promises/A+ specification ",
-  "main": "index.js",
+  "description": "pledged is a lightweight promise library implementing the Promises/A+ specification ",
+  "main": "dist/promise.cjs.js",
+  "module": "dist/promise.es.js",
+  "unpkg": "dist/promise.umd.js",
   "scripts": {
     "dev": "rollup --config build/rollup.config.hot.js --watch",
     "build:es": "node ./build/index.js --format es",
@@ -14,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yyf1994gggg/pledge.git"
+    "url": "git+https://github.com/yyf1994gggg/pledged.git"
   },
   "keywords": [
     "promise"
@@ -22,9 +24,9 @@
   "author": "Fong Yee",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yyf1994gggg/pledge/issues"
+    "url": "https://github.com/yyf1994gggg/pledged/issues"
   },
-  "homepage": "https://github.com/yyf1994gggg/pledge#readme",
+  "homepage": "https://github.com/yyf1994gggg/pledged#readme",
   "devDependencies": {
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
@@ -47,5 +49,11 @@
     "rollup-plugin-serve": "^1.0.1",
     "rollup-plugin-uglify": "^6.0.2",
     "yargs": "^13.2.2"
-  }
+  },
+  "files": [
+    "src",
+    "dist/*.js",
+    "types/*.d.ts",
+    "package.json"
+  ]
 }

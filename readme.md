@@ -1,6 +1,6 @@
 <h1 align="center">
 	<br>
-	<img width="256" src="logo.png" alt="pledge">
+	<img width="256" src="logo.png" alt="pledged">
 	<br>
 	<br>
 </h1>
@@ -8,17 +8,17 @@
 [<img src="https://promisesaplus.com/assets/logo-small.png" alt="Promises/A+ logo" title="Promises/A+ 1.1 compliant" align="right" />](https://promisesaplus.com)
 
 
-pledge is a lightweight promise library implementing the P [romises/A+ specification](http://promises-aplus.github.com/promises-spec/) (Version 1.1).
+pledged is a lightweight promise library implementing the P [romises/A+ specification](http://promises-aplus.github.com/promises-spec/) (Version 1.1).
 
 
 
 ```bash
-npm install pledge
+npm install pledged
 
 ```
 
 ```javascript
-var Promise = require('pledge');
+var Promise = require('pledged');
 
 ```
 
@@ -54,7 +54,7 @@ Promise.race([
 
 ## API
 
-pledge exports bare ES2015 Promise implementation and polyfills  
+pledged exports bare ES2015 Promise implementation and polyfills  
 
 **Promise.all(iterable)**  
 Returns a promise that either fulfills when all of the promises in the iterable argument have fulfilled or rejects as soon as one of the promises in the iterable argument rejects. If the returned promise fulfills, it is fulfilled with an array of the values from the fulfilled promises in the same order as defined in the iterable. If the returned promise rejects, it is rejected with the reason from the first promise in the iterable that rejected. This method can be useful for aggregating results of multiple promises.   

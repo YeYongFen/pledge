@@ -2,13 +2,15 @@ const Promise = require('./promise/promise.js');
 
 // import asap from './promise/asap';
 
-// let p = new Promise((resolve) => {
-//   setTimeout(() => {
-//     resolve(1);
-//   }, 2222);
-// }).then((n) => {
-//   console.log(n);
-// });
+let p = new Promise((resolve) => {
+  const p2 = new Promise((resolve, reject) => {
+
+  });
+
+  resolve(p2);
+}).then((n) => {
+
+});
 
 const p1 = new Promise((resolve) => {
   const obj = {
